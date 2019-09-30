@@ -1,0 +1,42 @@
+version: '3'
+volumes:
+  node_modules:
+services: 
+    client:
+        build:
+            context: .
+            dockerfile: ./docker/client/Dockerfile
+        working_dir: /home/node/app
+        environment:
+            NODE_ENV: production
+        volumes:
+            - .:/home/node/app
+            - node_modules:/home/node/app/node_modules/
+        ports:
+            - 8081:8080
+        expose:
+            - 8080
+        command: bash -c "env && npm run serve"
+        networks:
+            app_net:
+                ipv4_address: 172.21.0.2
+        depends_on:
+            - server
+    server:
+        build: 
+            context: .
+            dockerfile: ./docker/server/Dockerfile             
+        working_dir: /home/server
+        expose:
+            - 5000     
+        command: bash -c "FLASK_APP=app.py flask run --host 172.21.0.3"
+        networks:
+            app_net:
+                ipv4_address: 172.21.0.3
+        
+networks:
+  app_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.21.0.0/24"
